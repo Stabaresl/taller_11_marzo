@@ -1,0 +1,29 @@
+{
+  "name": "microservicio-ventas-express",
+  "version": "1.0.0",
+  "description": "Microservicio de registro de ventas con Express y MongoDB",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "express",
+    "mongo",
+    "mongoose",
+    "ventas",
+    "api-rest",
+    "microservicios"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.0",
+    "express": "^4.19.0",
+    "mongoose": "^8.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}
