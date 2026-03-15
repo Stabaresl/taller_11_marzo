@@ -1,74 +1,54 @@
-from flask import jsonify, request
+from flask import Blueprint, request, jsonify
+from firebase_admin import db as firebase_db
 
-def register_routes(app, db):
-    
-    # 1. Registro de productos (POST /productos)
-    @app.route('/api/productos', methods=['POST'])
-    def registrar_producto():
-        data = request.get_json()
-        if not data or 'nombre' not in data or 'precio' not in data:
-            return jsonify({'error': 'Faltan campos: nombre, precio'}), 400
-        
-        producto_data = {
-            'nombre': data['nombre'],
-            'precio': float(data['precio']),
-            'stock': int(data.get('stock', 0))
-        }
-        
-        doc_ref = db.collection('productos').add(producto_data)
-        return jsonify({
-            'id': doc_ref[1].id,
-            'mensaje': 'Producto registrado'
-        }), 201
+bp = Blueprint('productos', __name__)
 
-    # 2. Consulta de productos (GET /productos)
-    @app.route('/api/productos', methods=['GET'])
-    def consultar_productos():
-        productos = db.collection('productos').stream()
-        lista = [{
-            'id': p.id,
-            'nombre': p.to_dict()['nombre'],
-            'precio': p.to_dict()['precio'],
-            'stock': p.to_dict()['stock']
-        } for p in productos]
-        return jsonify(lista)
+def ref():
+    return firebase_db.reference('/productos')
 
-    # 3. Verificación de stock (GET /productos/<id>/stock)
-    @app.route('/api/productos/<producto_id>/stock', methods=['GET'])
-    def verificar_stock(producto_id):
-        doc = db.collection('productos').document(producto_id).get()
-        if not doc.exists:
-            return jsonify({'error': 'Producto no encontrado'}), 404
-        
-        data = doc.to_dict()
-        return jsonify({
-            'id': doc.id,
-            'nombre': data['nombre'],
-            'stock_actual': data['stock'],
-            'disponible': data['stock'] > 0
-        })
 
-    # 4. Actualización de inventario después de venta (PUT /productos/<id>/stock)
-    @app.route('/api/productos/<producto_id>/stock', methods=['PUT'])
-    def actualizar_inventario(producto_id):
-        data = request.get_json()
-        cantidad = int(data.get('cantidad_vendida', 1))
-        
-        doc_ref = db.collection('productos').document(producto_id)
-        doc = doc_ref.get()
-        
-        if not doc.exists:
-            return jsonify({'error': 'Producto no encontrado'}), 404
-        
-        stock_actual = doc.to_dict()['stock']
-        nuevo_stock = stock_actual - cantidad
-        
-        if nuevo_stock < 0:
-            return jsonify({'error': 'Stock insuficiente'}), 400
-        
-        doc_ref.update({'stock': nuevo_stock})
-        return jsonify({
-            'mensaje': 'Inventario actualizado',
-            'stock_anterior': stock_actual,
-            'stock_nuevo': nuevo_stock
-        })
+@bp.route('/productos', methods=['POST'])
+def add_producto():
+    data = request.json
+    if not data or 'nombre' not in data or 'stock' not in data or 'precio' not in data:
+        return jsonify({'error': 'Faltan campos: nombre, precio, stock'}), 400
+    nuevo = ref().push(data)
+    return jsonify({'message': 'Producto creado', 'id': nuevo.key}), 201
+
+@bp.route('/productos', methods=['GET'])
+def get_productos():
+    data = ref().get()
+    if not data:
+        return jsonify([])
+    productos = [{'id': k, **v} for k, v in data.items()]
+    return jsonify(productos)
+
+@bp.route('/productos/<id>', methods=['GET'])
+def get_producto(id):
+    data = ref().child(id).get()
+    if not data:
+        return jsonify({'error': 'Producto no encontrado'}), 404
+    return jsonify({'id': id, **data})
+
+@bp.route('/productos/<id>/stock', methods=['GET'])
+def verificar_stock(id):
+    data = ref().child(id).get()
+    if not data:
+        return jsonify({'error': 'Producto no encontrado'}), 404
+    stock = data.get('stock', 0)
+    return jsonify({'id': id, 'stock': stock, 'disponible': stock > 0})
+
+@bp.route('/productos/<id>/stock', methods=['PUT'])
+def actualizar_stock(id):
+    data = request.json
+    if 'cantidad' not in data:
+        return jsonify({'error': 'Falta el campo: cantidad'}), 400
+    producto = ref().child(id).get()
+    if not producto:
+        return jsonify({'error': 'Producto no encontrado'}), 404
+    stock_actual = producto.get('stock', 0)
+    if stock_actual < data['cantidad']:
+        return jsonify({'error': 'Stock insuficiente'}), 400
+    nuevo_stock = stock_actual - data['cantidad']
+    ref().child(id).update({'stock': nuevo_stock})
+    return jsonify({'message': 'Stock actualizado', 'stock_nuevo': nuevo_stock})
