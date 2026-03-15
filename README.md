@@ -289,14 +289,37 @@ cp .env.example .env
 #    GOOGLE_APPLICATION_CREDENTIALS=serviceAccountKey.json
 #    PORT=5000
 
-# 5. Colocar el serviceAccountKey.json en la raiz del proyecto
-#    (descargado desde Firebase Console > Configuracion > Cuentas de servicio)
+# 5. Obtener y colocar el serviceAccountKey.json en la raiz del proyecto
+#    Ver seccion 6.2.1 mas abajo para instrucciones detalladas
 
 # 6. Iniciar el servidor
 python app.py
 ```
 
 > El microservicio quedará corriendo en `http://localhost:5000`
+
+#### 6.2.1 Obtener las credenciales de Firebase
+
+El archivo `serviceAccountKey.json` **no está en el repositorio** porque contiene una clave privada real. Cada desarrollador debe obtener el suyo desde Firebase Console.
+
+Sigue estos pasos:
+
+1. Ve a [https://console.firebase.google.com](https://console.firebase.google.com)
+2. Selecciona el proyecto `inventario-flask-ec078` (o crea uno nuevo si vas a usar tu propio Firebase)
+3. Click en el ícono de engranaje ⚙️ → **Configuración del proyecto**
+4. Ve a la pestaña **Cuentas de servicio**
+5. Click en **Generar nueva clave privada**
+6. Confirma con **Generar clave** — se descargará un archivo `.json`
+7. Renombra ese archivo a `serviceAccountKey.json`
+8. Colócalo en la raíz de la carpeta `inventario-flask/`
+
+> **Si vas a usar tu propio proyecto de Firebase:**
+> - Crea el proyecto en Firebase Console
+> - Activa **Firestore Database** en modo producción o prueba
+> - Crea la colección `productos` (Firestore la crea automáticamente al insertar el primer documento)
+> - Genera la clave de cuenta de servicio como se describe arriba
+
+> **NUNCA** subas el `serviceAccountKey.json` al repositorio. Está en el `.gitignore` por seguridad — contiene una clave privada que da acceso total al proyecto de Firebase.
 
 ---
 
