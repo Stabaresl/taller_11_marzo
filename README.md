@@ -159,19 +159,23 @@ Paso 8 — Gateway responde al cliente
 
 > **Importante:** La `INTERNAL_KEY` debe ser idéntica en los tres servicios. Nunca subir el `.env` real al repositorio.
 
+> **IMPORTANTE:** La variable `INTERNAL_KEY` debe tener exactamente el mismo valor en los tres servicios.
+> Es la clave que usan los microservicios para verificar que los requests vienen del Gateway y no de un cliente externo.
+> Si los valores no coinciden, todos los requests entre servicios devolverán **403 Acceso no autorizado**.
+
 ### Gateway (Laravel) — `.env`
 ```
 APP_KEY=base64:...
 JWT_SECRET=clave-secreta-jwt-minimo-32-caracteres
 INVENTARIO_URL=http://localhost:5000
 VENTAS_URL=http://localhost:3001
-INTERNAL_KEY=una-clave-larga-y-aleatoria
+INTERNAL_KEY=esta-clave-debe-ser-igual-en-los-3-servicios  # <-- misma en todos
 ```
 
 ### Inventario (Flask) — `.env`
 ```
 SECRET_KEY=clave-flask-secreta
-INTERNAL_KEY=una-clave-larga-y-aleatoria
+INTERNAL_KEY=esta-clave-debe-ser-igual-en-los-3-servicios  # <-- misma en todos
 GOOGLE_APPLICATION_CREDENTIALS=serviceAccountKey.json
 PORT=5000
 FLASK_DEBUG=false
@@ -181,7 +185,7 @@ FLASK_DEBUG=false
 ```
 PORT=3001
 MONGO_URI=mongodb://localhost:27017/ventas_db
-INTERNAL_KEY=una-clave-larga-y-aleatoria
+INTERNAL_KEY=esta-clave-debe-ser-igual-en-los-3-servicios  # <-- misma en todos
 ```
 
 ---
